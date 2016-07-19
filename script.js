@@ -16,6 +16,13 @@ function drawCenterLine() {
 	ctx.setLineDash([]);
 }
 
+function loadSound() {
+	createjs.Sound.registerSound("sounds/blip1.wav", "blip1");
+	createjs.Sound.registerSound("sounds/blip2.wav", "blip2");
+	createjs.Sound.registerSound("sounds/blip3.wav", "blip3");
+	createjs.Sound.registerSound("sounds/blip4.wav", "blip4");
+}
+
 var Key = {
   _pressed: {},
 
@@ -51,6 +58,7 @@ var score = {
 		if (player === 2) {
 			this.player2 += 1;
 		}
+		createjs.Sound.play('blip3');
 		theBall = new Ball();
 	},
 	draw: function() {
@@ -68,7 +76,6 @@ function testCollision(paddle, ball) {
 		return false;
 	}
 }
-
 
 function Ball () {
 	this.radius = 15;
@@ -94,6 +101,7 @@ function Ball () {
 		// Check if ball hit left edge
 		if (this.x + this.vx - this.radius < paddle2.width * 2) {
 			if (testCollision(paddle2, theBall)) {
+				createjs.Sound.play('blip2');
 				this.vx *= (-1);
 			}
 			else {
@@ -104,6 +112,7 @@ function Ball () {
 		// Check if ball hit right edge
 		if (this.x + this.vx + this.radius > canvas.width - paddle1.width * 2) {
 			if (testCollision(paddle1, theBall)) {
+				createjs.Sound.play('blip1');
 				this.vx *= (-1);
 			}
 			else {
@@ -153,6 +162,7 @@ function Paddle(side, upKey, downKey) {
 
 window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
 window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
+loadSound();
 
 function drawFrame() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
