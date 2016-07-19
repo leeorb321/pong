@@ -1,10 +1,9 @@
 var canvas = document.getElementById('pong-canvas');
 var ctx = canvas.getContext("2d");
 
-var scoreboard = document.getElementById('scoreboard-canvas');
-var scoreboardCtx = scoreboard.getContext("2d");
-
 ctx.fillStyle="#000000";
+ctx.font = "40px monospace";
+ctx.textAlign = "center";
 ctx.strokeStyle = "#000000";
 ctx.lineWidth = 3;
 
@@ -16,9 +15,6 @@ function drawCenterLine() {
 	ctx.stroke();
 	ctx.setLineDash([]);
 }
-
-scoreboardCtx.fillStyle="#000000";
-scoreboardCtx.font = "30px Arial";
 
 var Key = {
   _pressed: {},
@@ -58,7 +54,9 @@ var score = {
 		theBall = new Ball();
 	},
 	draw: function() {
-		scoreboardCtx.fillText(this.player1 + ' ' + this.player2, 100, 100);
+		ctx.fillText(this.player1, canvas.width/2 + 50, 50);
+		ctx.fillText(this.player2, canvas.width/2 - 50, 50);
+
 	}
 }
 
@@ -150,16 +148,6 @@ function Paddle(side, upKey, downKey) {
 		if (this.y + this.height + speed <= canvas.height && Key.isDown(downKey)) {
 			this.y += speed * 2;
 		}
-
-		// if (this.y + this.height < 0 || this.y > canvas.height) {
-		// 	this.vy *= (-1);
-		// }
-		// if (Key.isDown(Key.UP)) {
-		// 	this.y -= speed * 2;
-		// }
-		// if (Key.isDown(Key.DOWN)) {
-		// 	this.y += speed * 2;
-		// }
 	};
 };
 
@@ -168,7 +156,6 @@ window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, fa
 
 function drawFrame() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	scoreboardCtx.clearRect(0, 0, scoreboard.width, scoreboard.height);
 	drawCenterLine();
 	theBall.move();
 	theBall.draw();
