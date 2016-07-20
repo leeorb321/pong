@@ -87,7 +87,12 @@ var scored = new State(function() {
 	;},250);
 	window.setTimeout(function() {
 			clearInterval(blinkInterval);
-			game.setState(playing);
+			if (score.winner) {
+				game.setState(gameOver);
+			}
+			else {
+				game.setState(playing);
+			}
 		}, 2000);
 	}, function() {
 		drawCenterLine();
@@ -99,7 +104,6 @@ var scored = new State(function() {
 });
 
 var gameOver = new State(function() {}, function() {
-	theBall.draw();
 	score.draw();
 	paddle1.draw();
 	paddle2.draw();
@@ -160,14 +164,13 @@ var score = {
 		//Check if player has won
 		if (this.player1 === this.maxScore) {
 			this.winner = "PLAYER 1";
-			game.setState(gameOver);
 		}
-		if (this.player2 === this.maxScore) {
+		else if (this.player2 === this.maxScore) {
 			this.winner = "PLAYER 2";
-			game.setState(gameOver);
 		}
 
 		game.setState(scored);
+
 	},
 	draw: function() {
 		ctx.fillStyle="#000000";
