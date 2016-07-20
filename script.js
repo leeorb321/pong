@@ -49,6 +49,7 @@ var paddle1 = new Paddle('right', Key.UP, Key.DOWN);
 var paddle2 = new Paddle('left', Key.S, Key.X);
 
 var score = {
+	maxScore: 10,
 	player1: 0,
 	player2: 0,
 	incrementScore: function (player) {
@@ -59,6 +60,15 @@ var score = {
 			this.player2 += 1;
 		}
 		createjs.Sound.play('blip3');
+
+		//Check if player has won
+		if (this.player1 === maxScore) {
+			gameOver(1);
+		}
+		if (this.player2 === maxScore) {
+			gameOver(2);
+		}
+
 		theBall = new Ball();
 	},
 	draw: function() {
@@ -163,6 +173,10 @@ function Paddle(side, upKey, downKey) {
 window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
 window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
 loadSound();
+
+function gameOver(winningPlayer) {
+	
+}
 
 function drawFrame() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
