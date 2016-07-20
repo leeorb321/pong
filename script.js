@@ -184,7 +184,7 @@ var score = {
 }
 
 function testCollision(paddle, ball) {
-	if (ball.y >= paddle.y && ball.y <= paddle.y + paddle.height) {
+	if (ball.y + ball.radius >= paddle.y && ball.y - ball.radius <= paddle.y + paddle.height) {
 		return true;
 	}
 	else {
