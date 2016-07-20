@@ -42,11 +42,12 @@ var key = {
   }
 };
 
-function State (updateFunction) {
+function State (enterFunction, updateFunction) {
+	this.enter = enterFunction;
 	this.update = updateFunction;
 }
 
-var newGame = new State(function() {
+var newGame = new State(function() {}, function() {
 	ctx.fillStyle="#000000";
 	ctx.font = "40px monospace";
 	ctx.textAlign = "center";
@@ -54,11 +55,14 @@ var newGame = new State(function() {
 	ctx.fillText("PONG", canvas.width/2, canvas.height/2);
 	ctx.fillText("Press Enter to Continue", canvas.width/2, canvas.height/2 + 50);
 	if (key.isDown(key.ENTER)) {
-		game.state = playing;
+		game.setState(playing);
 	}
 });
 
 var playing = new State(function() {
+			theBall.reset();
+		}, function() {
+	this.name="playing update";
 	drawCenterLine();
 	theBall.move();
 	theBall.draw();
@@ -69,7 +73,32 @@ var playing = new State(function() {
 	paddle2.draw();
 });
 
-var gameOver = new State(function() {
+var scored = new State(function() {
+	theBall.color = theBall.blinkColor1;
+	var blinkInterval = window.setInterval(function() {
+		console.log('blink');
+		console.log(theBall.color);
+		if (theBall.color != theBall.blinkColor1) {
+			theBall.color = theBall.blinkColor1;
+		}
+		else {
+			theBall.color = theBall.blinkColor2;
+		}
+	;},250);
+	window.setTimeout(function() {
+			clearInterval(blinkInterval);
+			game.setState(playing);
+		}, 2000);
+	}, function() {
+		drawCenterLine();
+		score.draw();
+		paddle1.draw();
+		paddle2.draw();
+		theBall.draw();
+		this.name="playing update";
+});
+
+var gameOver = new State(function() {}, function() {
 	theBall.draw();
 	score.draw();
 	paddle1.draw();
@@ -83,17 +112,29 @@ var gameOver = new State(function() {
 	ctx.fillText(score.winner + " WINS!", canvas.width/2, canvas.height/2);
 	ctx.fillText("Press Enter to Play Again", canvas.width/2, canvas.height/2 + 50);
 	if (key.isDown(key.ENTER)) {
-		score.reset();
-		game.state = playing;
+		game.reset();
+		game.setState(playing);
 	}
 });
 
 var game = {
 	state: newGame,
+	stateStartTime: null,
+	setState: function(newState) {
+		this.stateStartTime = Date.now();
+		this.state = newState;
+		newState.enter();
+	},
 	play: function() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		game.state.update();
 		window.requestAnimationFrame( game.play );
+	},
+	reset: function() {
+		theBall.reset();
+		score.player1 = 0;
+		score.player2 = 0;
+		score.winner = null;
 	}
 }
 
@@ -107,6 +148,7 @@ var score = {
 	player2: 0,
 	winner: null,
 	incrementScore: function (player) {
+
 		if (player === 1) {
 			this.player1 += 1;
 		}
@@ -118,16 +160,14 @@ var score = {
 		//Check if player has won
 		if (this.player1 === this.maxScore) {
 			this.winner = "PLAYER 1";
-			game.state = gameOver;
+			game.setState(gameOver);
 		}
 		if (this.player2 === this.maxScore) {
 			this.winner = "PLAYER 2";
-			game.state = gameOver;
+			game.setState(gameOver);
 		}
 
-		if (this.winner === null) {
-			theBall = new Ball();
-		}
+		game.setState(scored);
 	},
 	draw: function() {
 		ctx.fillStyle="#000000";
@@ -137,12 +177,6 @@ var score = {
 		ctx.fillText(this.player1, canvas.width/2 + 50, 50);
 		ctx.fillText(this.player2, canvas.width/2 - 50, 50);
 
-	},
-	reset: function() {
-		theBall = new Ball();
-		this.player1 = 0;
-		this.player2 = 0;
-		this.winner = null;
 	}
 }
 
@@ -156,6 +190,10 @@ function testCollision(paddle, ball) {
 }
 
 function Ball () {
+	this.defaultColor = '#000000';
+	this.blinkColor1 = '#FF0000';
+	this.blinkColor2 = '#FFFFFF';
+	this.color = '#000000';
 	this.radius = 15;
 	this.x = canvas.width/2;
 	// Randomize initial ball starting point along y-axis
@@ -169,13 +207,27 @@ function Ball () {
 		this.vx = speed;
 	}
 	this.vy = speed;
+	this.reset = function() {
+		this.color = this.defaultColor;
+		this.x = canvas.width/2;
+		// Randomize initial ball starting point along y-axis
+		this.y = Math.random() * (canvas.height/4) + (canvas.height/4);
+		var speed = 4;
+		// Randomize initial ball direction (left/right)
+		if (Math.random() > 0.5) {
+			this.vx = -speed;
+		}
+		else {
+			this.vx = speed;
+		}
+	}
 	this.draw = function() {
+		ctx.fillStyle= this.color;
+		ctx.strokeStyle = this.color;
 		ctx.beginPath();
 		ctx.arc(this.x + (1/2), this.y + (1/2), this.radius, 0, 2*Math.PI);
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle="#000000";
-		ctx.strokeStyle = "#000000";
 	};
 	this.move = function() {
 		// Check if ball hit left edge
@@ -208,6 +260,21 @@ function Ball () {
 		// Move ball
 		this.x += this.vx;
 		this.y += this.vy; 
+	};
+	this.blink = function() {
+		var color = "#FF0000";
+			if (color === "#FF0000") {
+				color = "#FFFFFF";
+			} 
+			else {
+				color = "#FF0000";
+			}
+		ctx.fillStyle = color;
+		ctx.strokeStyle = color;
+		ctx.beginPath();
+		ctx.arc(this.x + (1/2), this.y + (1/2), this.radius, 0, 2*Math.PI);
+		ctx.fill();
+		ctx.stroke();
 
 	};
 }
