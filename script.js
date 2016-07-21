@@ -2,8 +2,8 @@ var canvas = document.getElementById('pong-canvas');
 var ctx = canvas.getContext("2d");
 
 function drawCenterLine() {
-	ctx.fillStyle="#000000";
-	ctx.strokeStyle = "#000000";
+	ctx.fillStyle="#FFFFFF";
+	ctx.strokeStyle = "#FFFFFF";
 	ctx.lineWidth = 3;
 	ctx.setLineDash([5, 12]);
 	ctx.beginPath();
@@ -17,7 +17,7 @@ function loadSound() {
 	createjs.Sound.registerSound("sounds/blip1.wav", "blip1");
 	createjs.Sound.registerSound("sounds/blip2.wav", "blip2");
 	createjs.Sound.registerSound("sounds/blip3.wav", "blip3");
-	createjs.Sound.registerSound("sounds/blip4.wav", "blip4");
+	createjs.Sound.registerSound("sounds/game-over.wav", "gameOver");
 }
 
 var key = {
@@ -48,12 +48,21 @@ function State (enterFunction, updateFunction) {
 }
 
 var newGame = new State(function() {}, function() {
-	ctx.fillStyle="#000000";
-	ctx.font = "40px monospace";
+	ctx.fillStyle="#FFFFFF";
 	ctx.textAlign = "center";
-	ctx.strokeStyle = "#000000";
-	ctx.fillText("PONG", canvas.width/2, canvas.height/2);
-	ctx.fillText("Press Enter to Continue", canvas.width/2, canvas.height/2 + 50);
+	ctx.strokeStyle = "#FFFFFF";
+	
+	ctx.font = " 100px 'Press Start 2P', 'monospace' ";
+	ctx.fillText("PONG", canvas.width/2 + 0.5, canvas.height/2 - 100);
+
+	ctx.font = " 30px 'Press Start 2P', 'monospace' ";
+	ctx.fillText("CONTROLS", canvas.width/2 + 0.5, canvas.height/2);
+
+	ctx.font = " 25px 'Press Start 2P', 'monospace' ";
+	ctx.fillText("Player 1: Up & Down", canvas.width/2 + 0.5, canvas.height/2+50);
+	ctx.fillText("Player 2: S & X", canvas.width/2 + 0.5, canvas.height/2+100);
+	ctx.fillText("PRESS ENTER TO CONTINUE", canvas.width/2 + 0.5, canvas.height/2 + 200);
+	
 	if (key.isDown(key.ENTER)) {
 		game.setState(playing);
 	}
@@ -76,8 +85,7 @@ var playing = new State(function() {
 var scored = new State(function() {
 	theBall.color = theBall.blinkColor1;
 	var blinkInterval = window.setInterval(function() {
-		console.log('blink');
-		console.log(theBall.color);
+		createjs.Sound.play('blip2');
 		if (theBall.color != theBall.blinkColor1) {
 			theBall.color = theBall.blinkColor1;
 		}
@@ -103,18 +111,26 @@ var scored = new State(function() {
 		this.name="playing update";
 });
 
-var gameOver = new State(function() {}, function() {
+var gameOver = new State(function() {
+	createjs.Sound.play('gameOver');
+}, function() {
 	score.draw();
 	paddle1.draw();
 	paddle2.draw();
 
-	ctx.fillStyle="#000000";
-	ctx.font = "40px monospace";
+	ctx.fillStyle="#FFFFFF";
 	ctx.textAlign = "center";
-	ctx.strokeStyle = "#000000";
-	ctx.fillText("GAME OVER!", canvas.width/2, canvas.height/2 - 50);
-	ctx.fillText(score.winner + " WINS!", canvas.width/2, canvas.height/2);
-	ctx.fillText("Press Enter to Play Again", canvas.width/2, canvas.height/2 + 50);
+	ctx.strokeStyle = "#FFFFFF";
+
+	ctx.font = " 60px 'Press Start 2P', 'monospace' ";
+	ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 50);
+
+	ctx.font = " 40px 'Press Start 2P', 'monospace' ";
+	ctx.fillText(score.winner + " WINS!", canvas.width/2, canvas.height/2 + 25);
+
+	ctx.font = " 25px 'Press Start 2P', 'monospace' ";
+	ctx.fillText("PRESS ENTER TO PLAY AGAIN", canvas.width/2 + 0.5, canvas.height/2 + 200);
+
 	if (key.isDown(key.ENTER)) {
 		game.reset();
 		game.setState(playing);
@@ -147,7 +163,7 @@ var paddle1 = new Paddle('right', key.UP, key.DOWN);
 var paddle2 = new Paddle('left', key.S, key.X);
 
 var score = {
-	maxScore: 3,
+	maxScore: 5,
 	player1: 0,
 	player2: 0,
 	winner: null,
@@ -173,10 +189,10 @@ var score = {
 
 	},
 	draw: function() {
-		ctx.fillStyle="#000000";
-		ctx.font = "40px monospace";
+		ctx.fillStyle="#FFFFFF";
+		ctx.font = " 40px 'Press Start 2P', 'monospace' ";
 		ctx.textAlign = "center";
-		ctx.strokeStyle = "#000000";
+		ctx.strokeStyle = "#FFFFFF";
 		ctx.fillText(this.player1, canvas.width/2 + 50, 50);
 		ctx.fillText(this.player2, canvas.width/2 - 50, 50);
 
@@ -193,15 +209,16 @@ function testCollision(paddle, ball) {
 }
 
 function Ball () {
-	this.defaultColor = '#000000';
+	this.defaultColor = '#FFFFFF';
 	this.blinkColor1 = '#FF0000';
-	this.blinkColor2 = '#FFFFFF';
-	this.color = '#000000';
+	this.blinkColor2 = '#000000';
+	this.color = '#FFFFFF';
 	this.radius = 15;
 	this.x = canvas.width/2;
+	this.acceleration = 1.05
 	// Randomize initial ball starting point along y-axis
 	this.y = Math.random() * (canvas.height/4) + (canvas.height/4);
-	var speed = 4;
+	var speed = 5;
 	// Randomize initial ball direction (left/right)
 	if (Math.random() > 0.5) {
 		this.vx = -speed;
@@ -215,7 +232,8 @@ function Ball () {
 		this.x = canvas.width/2;
 		// Randomize initial ball starting point along y-axis
 		this.y = Math.random() * (canvas.height/4) + (canvas.height/4);
-		var speed = 4;
+		var speed = 5;
+		this.vy = speed;
 		// Randomize initial ball direction (left/right)
 		if (Math.random() > 0.5) {
 			this.vx = -speed;
@@ -237,7 +255,7 @@ function Ball () {
 		if (this.x + this.vx - this.radius < paddle2.width * 2) {
 			if (testCollision(paddle2, theBall)) {
 				createjs.Sound.play('blip2');
-				this.vx *= (-1);
+				this.vx *= (-1 * this.acceleration);
 			}
 			else {
 				score.incrementScore(1);
@@ -248,7 +266,7 @@ function Ball () {
 		if (this.x + this.vx + this.radius > canvas.width - paddle1.width * 2) {
 			if (testCollision(paddle1, theBall)) {
 				createjs.Sound.play('blip1');
-				this.vx *= (-1);
+				this.vx *= (-1 * this.acceleration);
 			}
 			else {
 				score.incrementScore(2);
@@ -257,7 +275,7 @@ function Ball () {
 
 		// Check if ball hit top or bottom
 		if (this.y + this.vy - this.radius < 0 || this.y + this.vy + this.radius > canvas.height) {
-			this.vy *= (-1);
+			this.vy *= (-1 * this.acceleration);
 		}
 
 		// Move ball
@@ -296,8 +314,8 @@ function Paddle(side, upKey, downKey) {
 	var speed = 4;
 
 	this.draw = function() {
-		ctx.fillStyle="#000000";
-		ctx.strokeStyle = "#000000";
+		ctx.fillStyle="#FFFFFF";
+		ctx.strokeStyle = "#FFFFFF";
 		ctx.lineWidth = 3;
 		ctx.fillRect(this.x, this.y, this.width, this.height);
 	};
@@ -321,4 +339,12 @@ function gameOver(winningPlayer) {
 
 }
 
-game.play();
+// Load font before starting game
+WebFont.load({
+    google: {
+      families: ['Press Start 2P']
+    },
+    active: function() {
+    	game.play();
+    }
+});
